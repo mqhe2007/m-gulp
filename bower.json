@@ -1,0 +1,23 @@
+{
+  "name": "zcwm",
+  "description": "zhichong wechat web",
+  "main": "",
+  "authors": [
+    "qingjin.me"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "src/libs",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^1.12.4",
+    "animate.css": "^3.5.2"
+  }
+}
