@@ -1,124 +1,138 @@
 'use strict';
-
 //引入gulp及各种插件;
+var gulp           = require('gulp'), //gulp前端自动化工作流
+    argv           = require('yargs').argv,//接收命令行参数
+    mkdirp         = require('mkdirp'),//node文件夹模块
+    del            = require('del'),//删除文件或文件夹
+    gulpif         = require('gulp-if'),//逻辑判断
+    changedInPlace = require('gulp-changed-in-place'),//只允许改动过的文件通过流(对比编译前的文件)
+    uglify         = require('gulp-uglify'), //压缩JS代码
+    sass           = require('gulp-sass'), //sass编译成CSS
+    autoprefixer   = require('gulp-autoprefixer'), //CSS3浏览器私有前缀处理
+    concat         = require('gulp-concat'),//合并文件
+    imagemin       = require('gulp-imagemin'), //图片压缩
+    sourcemaps     = require('gulp-sourcemaps'),//生成源文件映射，便于调试
+    jade           = require('gulp-jade'),//编译jade
+    browserSync    = require('browser-sync').create(), //浏览器同步测试工具
+    reload         = browserSync.reload,
+    gulpSequence   = require('gulp-sequence');//按顺序执行任务
 
-var gulp = require('gulp'), //gulp前端自动化工作流
-    changed = require('gulp-changed'), //只允许改动过的文件通过流
-    imagemin = require('gulp-imagemin'), //图片压缩
-    pngquant = require('imagemin-pngquant'), //png图片压缩
-    cache = require('gulp-cache'), //图片缓存，图片替换才压缩
-    uglify = require('gulp-uglify'), //压缩JS代码
-    sass = require('gulp-sass'), //sass编译成CSS
-    autoprefixer = require('gulp-autoprefixer'), //CSS3浏览器私有前缀处理
-    htmlmin = require('gulp-htmlmin'), //压缩html
-    contentIncluder = require('gulp-content-includer'), //includer处理器
-    browserSync = require('browser-sync').create(), //浏览器同步测试工具
-    reload = browserSync.reload;
+//设置各种输入输出文件夹的路径;
+var paths = {
+    src  : {
+        libs   : "src/libs/",
+        scripts: "src/js/",
+        styles : "src/sass/",
+        images : "src/img/",
+        jade   : "src/views/"
+    },
+    build: {
+        libs   : "build/public/libs/",
+        scripts: "build/public/js/",
+        styles : "build/public/css/",
+        images : "build/public/img/",
+        html   : "build/views/"
+    }
+};
 
-//设置各种输入输出文件夹的位置;
+//生成目录
+gulp.task('mkdirs', function () {
+    for (var x in paths) {
+        for (var y in paths[x]) {
+            mkdirp(paths[x][y]);
+            console.log('生成目录', paths[x][y])
+        }
+        ;
+    }
+});
 
-var srcJS = './src/js/',  //JS源文件目录
-    destJS = './dist/js/', //JS发行目录
-    srcCSS = './src/css/', //SCSS源文件目录
-    destCSS = './dist/css/', //CSS发行目录
-    srcFont = './src/fonts/', //字体图标源文件目录
-    destFont = './dist/fonts/', //字体图标发行目录
-    srcImage = './src/img/', //图片源文件目录
-    destImage = './dist/img/', //图片发行目录
-    srcComp = './src/comp/', //组件文件源文件目录
-    srcHtml = './src/', //页面文件源文件目录
-    destHtml = './dist/'; //页面文件发行目录
+// 启动gulp,生成目录
+gulp.task('default', ['mkdirs'], function () {
+    console.log('\x1B[33m%s\x1b[0m', '请键入命令：\n（请使用以下项目开始启动项目）');
+    console.log('1.gulp run -d      开始开发');
+    console.log('2.gulp run -b      开始打包');
+});
 
+//gulp打包队列
+gulp.task('run', function () {
+    gulpSequence('clean', ['js', 'sass', 'moveFiles', 'img'], 'templates', 'server', function () {
+        if (argv.b) { //打包环境
+            console.log('\x1B[33m%s\x1b[0m', '打包部署环境准备完成')
+        } else if (argv.d) { //开发环境
+            console.log('\x1B[33m%s\x1b[0m', '开发环境准备完成')
+        }
+    });
+});
 
-//使用gulp js任务压缩JS;
+//清空build目录
+gulp.task('clean', function () {
+    return del('build/*')
+});
+
+//处理js;
 gulp.task('js', function () {
-    return gulp.src(srcJS+"*.js")
-        // .pipe(uglify())
-        .pipe(gulp.dest(destJS))
+    return gulp.src(paths.src.scripts + "**/*.js")
+        .pipe(sourcemaps.init())
+        .pipe(gulpif(argv.b, uglify()))
+        .pipe(sourcemaps.write('maps'))
+        .pipe(gulp.dest(paths.build.scripts))
         .pipe(reload({stream: true}));
 
 });
 
-//使用gulp css启用任务编译SCSS添加浏览器私有属性并压缩;
-gulp.task('css', function () {
-    return gulp.src(srcCSS+"*.scss")
-        .pipe(sass({outputStyle: 'compact'}).on('error', sass.logError))
+//转移引用库文件
+gulp.task('moveFiles', function () {
+    gulp.src(paths.src.libs + 'jquery/dist/jquery.min.js', {base: paths.src.libs}).pipe(gulp.dest(paths.build.libs));
+    gulp.src(paths.src.libs + 'animate.css/animate.min.css', {base: paths.src.libs}).pipe(gulp.dest(paths.build.libs));
+});
+
+//处理SCSS
+gulp.task('sass', function () {
+    return gulp.src(paths.src.styles + "*.scss")
+        .pipe(sourcemaps.init())
+        .pipe(sass())
         .pipe(autoprefixer({
-            browsers: ['last 2 versions', 'last 2 Explorer versions', 'Firefox >= 20', 'IOS 7', 'Android >= 4.0',],
-            cascade: false,
-            remove: true,
+            browsers: ['last 2 versions', 'iOS', 'Android']
         }))
-        .pipe(gulp.dest(destCSS))
+        .pipe(sourcemaps.write('maps'))
+        .pipe(gulp.dest(paths.build.styles))
         .pipe(reload({stream: true}));
 
 });
 
-//使用gulp img启用任务压缩图片
+//压缩图片
 gulp.task('img', function () {
-    gulp.src(srcImage+"*/*.{png,jpg,gif}")
-        .pipe(cache(imagemin({
+    return gulp.src(paths.src.images + "**/*.{png,jpg,gif}")
+        .pipe(gulpif(argv.b,imagemin({
             progressive: true, //是否无损压缩jpg图片
-            svgoPlugins: [{removeViewBox: false}],
-            use: [pngquant()] //使用pngquant深度压缩png图片
+            svgoPlugins: [{removeViewBox: false}]
         })))
-        .pipe(gulp.dest(destImage));
-});
-//把所有font扔进dist文件夹(不作处理);
-gulp.task('font', function () {
-    return gulp.src(srcFont+"*.*")
-    .pipe(gulp.dest(destFont))
-    .pipe(reload({stream: true}));
+        .pipe(gulp.dest(paths.build.images));
 });
 
-//组件变动重新编译全局html文件并刷新浏览器
-gulp.task('comp',function () {
-    return gulp.src(srcHtml+"*.html")
-        .pipe(contentIncluder({  //include文件
-            includerReg:/<!\-\-include\s+"([^"]+)"\-\->/g
+//编译jade
+gulp.task('templates', function () {
+    return gulp.src(paths.src.jade + '**/*.jade')
+        .pipe(changedInPlace({firstPass: true}))
+        .pipe(jade({
+            pretty: true
         }))
-        .pipe(gulp.dest(destHtml))
+        .pipe(gulp.dest(paths.build.html))
         .pipe(reload({stream: true}));
-});
-
-//把所有页面文件扔进dist文件夹(不作处理);
-gulp.task('html', function () {
-    return gulp.src(srcHtml+"*.html")
-        .pipe(changed(destHtml))
-        .pipe(contentIncluder({  //include文件
-            includerReg:/<!\-\-include\s+"([^"]+)"\-\->/g
-        }))
-        //.pipe(htmlmin({
-        //    removeComments: true,//清除HTML注释
-        //    collapseWhitespace: true,//压缩HTML
-        //    collapseBooleanAttributes: false,//省略布尔属性的值 <input checked="true"/> ==> <input />
-        //    removeEmptyAttributes: true,//删除所有空格作属性值 <input id="" /> ==> <input />
-        //    removeScriptTypeAttributes: true,//删除<script>的type="text/javascript"
-        //    removeStyleLinkTypeAttributes: true,//删除<style>和<link>的type="text/css"
-        //    minifyJS: false,//压缩页面JS
-        //    minifyCSS: false//压缩页面CSS
-        //}))
-        .pipe(gulp.dest(destHtml))
-        .pipe(reload({stream: true}));  
 
 });
 
-//使用gulp server启用此任务，以dist文件夹为基础,启动服务器;;
-
+//启动服务器
 gulp.task('server', function () {
     browserSync.init({
         server: {
-            baseDir: "dist"
+            baseDir: "build/views"
         }
     });
-    gulp.watch(srcJS+"*.js", ['js']);
-    gulp.watch(srcCSS+"*.scss", ['css']);
-    gulp.watch(srcFont+"*.*", ['font']);
-    gulp.watch(srcImage+"*.{png,jpg,gif}", ['img']);
-    gulp.watch(srcComp+"*.html", ['comp']);
-    gulp.watch(srcHtml+"*.html", ['html']);
-    gulp.watch('dist').on('change', browserSync.reload);
+    gulp.watch(paths.src.scripts + "*.js", ['js']);
+    gulp.watch(paths.src.libs + "**/*.*", ['moveFiles']);
+    gulp.watch(paths.src.styles + "*.scss", ['sass']);
+    gulp.watch(paths.src.images + "**/*.{png,jpg,gif}", ['img']);
+    gulp.watch(paths.src.jade + '**/*.jade', ['templates']);
+    // gulp.watch(paths.build.html).on('change', browserSync.reload);
 });
-
-//gulp默认任务(集体走一遍,然后开监听);
-
-gulp.task('default', ['js', 'css','font','img','comp','html', 'server']);
