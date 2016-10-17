@@ -1,20 +1,24 @@
 {
-  "name": "you project name",
-  "version": "1.0.0",
-  "description": "you project description",
-  "author": "qingjin",
+  "name": "",
+  "description": "",
+  "version": "0.0.0",
+  "author": "qingjin.me",
   "devDependencies": {
-    "gulp": "",
-    "gulp-uglify": "",
-    "gulp-clean-css": "",
-    "gulp-sass": "",
-    "gulp-autoprefixer": "",
     "browser-sync": "",
+    "del": "",
+    "gulp": "",
+    "gulp-autoprefixer": "",
+    "gulp-changed-in-place": "",
+    "gulp-concat": "",
+    "gulp-if": "",
     "gulp-imagemin": "",
-    "gulp-cache": "",
-    "imagemin-pngquant": "",
-    "gulp-htmlmin": "",
-    "gulp-content-includer": "",
-    "gulp-changed": ""
-  }
+    "gulp-jade": "",
+    "gulp-sass": "",
+    "gulp-sequence": "",
+    "gulp-sourcemaps": "",
+    "gulp-uglify": "",
+    "yargs": "",
+    "mkdirp":""
+  },
+  "dependencies": {}
 }
