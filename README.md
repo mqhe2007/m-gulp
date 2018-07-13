@@ -1,6 +1,16 @@
-# Minegulp
+# m-gulp
+
 个人使用的gulp配置
-目前实现：JS压缩--编译SCSS--补全浏览器前缀--图片压缩--include代码段--自动刷新浏览器
-## 使用方法
-```bash
-npm install
+
+### 目前实现
+- [x] JS压缩
+
+- [x] stylus编译
+
+- [x] autoprefixer
+
+- [x] 图片压缩
+
+- [x] include代码段
+
+- [x] 浏览器自动刷新
