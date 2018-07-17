@@ -4,7 +4,6 @@ let gulp = require('gulp'), // gulp前端自动化工作流
   mkdirp = require('mkdirp'), // node文件处理模块
   del = require('del'), // 删除文件或文件夹
   gulpif = require('gulp-if'), //逻辑判断
-  changedInPlace = require('gulp-changed-in-place'), // 只允许改动过的文件通过流(对比编译前的文件)
   uglify = require('gulp-uglify'), // 压缩JS代码
   autoprefixer = require('gulp-autoprefixer'), // CSS私有前缀处理
   imagemin = require('gulp-imagemin'), // 图片压缩
@@ -16,7 +15,7 @@ let gulp = require('gulp'), // gulp前端自动化工作流
   rev = require('gulp-rev'), // 为资源加上版本号
   revRewrite = require('gulp-rev-rewrite'), // 把html中的资源替换为加上版本号的资源
   babel = require('gulp-babel'),
-  revDelete = require('gulp-rev-delete-original')
+  fileinclude = require('gulp-file-include')
 
 //设置各种输入输出文件夹的路径;
 let paths = {
@@ -25,7 +24,8 @@ let paths = {
     scripts: 'src/scripts/',
     styles: 'src/styles/',
     images: 'src/images/',
-    html: 'src/html/'
+    pages: 'src/pages/',
+    components: 'src/components/'
   },
   build: {
     html: 'build/',
@@ -56,7 +56,7 @@ gulp.task('default', function() {
 // 开启glup工作流
 gulp.task(
   'start',
-  gulpSequence('clean', ['js', 'style', 'lib', 'image'], 'html', 'server')
+  gulpSequence('clean', ['js', 'style', 'lib', 'image'], 'page', 'server')
 )
 
 // 清空build目录
@@ -136,12 +136,12 @@ gulp.task('image', function() {
     .pipe(reload({ stream: true }))
 })
 
-//编译html
-gulp.task('html', function() {
+//编译页面
+gulp.task('page', function() {
   const manifest = gulp.src('build/public/rev-manifest.json')
   return gulp
-    .src(paths.src.html + '**/*.html')
-    .pipe(changedInPlace({ firstPass: true }))
+    .src(paths.src.pages + '**/*.html')
+    .pipe(fileinclude())
     .pipe(revRewrite({ manifest }))
     .pipe(gulp.dest(paths.build.html))
     .pipe(reload({ stream: true }))
@@ -151,7 +151,8 @@ gulp.task('html', function() {
 gulp.task('reload', function() {
   const manifest = gulp.src('build/public/rev-manifest.json')
   return gulp
-    .src(paths.src.html + '**/*.html')
+    .src(paths.src.pages + '**/*.html')
+    .pipe(fileinclude())
     .pipe(revRewrite({ manifest }))
     .pipe(gulp.dest(paths.build.html))
     .pipe(reload({ stream: true }))
@@ -172,5 +173,6 @@ gulp.task('server', function() {
     gulpSequence('style', 'reload')()
   })
   gulp.watch('**/*.{png,jpg,gif}', { cwd: paths.src.images }, ['image'])
-  gulp.watch('**/*.html', { cwd: paths.src.html }, ['html'])
+  gulp.watch('**/*.html', { cwd: paths.src.pages }, ['page'])
+  gulp.watch('**/*.html', { cwd: paths.src.components }, ['page'])
 })
