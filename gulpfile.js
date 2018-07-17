@@ -53,11 +53,18 @@ gulp.task('default', function() {
   console.log('2、gulp build -启动打包服务')
 })
 
-// 开启glup工作流
+// 开启glup开发工作流
 gulp.task(
-  'start',
+  'dev',
   gulpSequence('clean', ['js', 'style', 'lib', 'image'], 'page', 'server')
 )
+
+// 开启glup打包工作流
+gulp.task('build', () => {
+  gulpSequence('clean', ['js', 'style', 'lib', 'image'], 'page')(() => {
+    console.log('build完成')
+  })
+})
 
 // 清空build目录
 gulp.task('clean', function() {
@@ -67,7 +74,6 @@ gulp.task('clean', function() {
 // 处理js
 gulp.task('js', function() {
   del.sync(paths.build.scripts + '*')
-  console.log('删除历史脚本')
   return gulp
     .src(paths.src.scripts + '**/*.js')
     .pipe(gulpif(process.env.NODE_ENV === 'production', sourcemaps.init()))
@@ -77,13 +83,15 @@ gulp.task('js', function() {
       })
     )
     .pipe(gulpif(process.env.NODE_ENV === 'production', uglify()))
-    .pipe(gulpif(process.env.NODE_ENV === 'production', sourcemaps.write()))
     .pipe(rev())
+    .pipe(gulpif(process.env.NODE_ENV === 'production', sourcemaps.write('./')))
     .pipe(gulp.dest(paths.build.scripts))
-    .pipe(rev.manifest('build/public/rev-manifest.json', {
-      base: 'build/public',
-			merge: true
-    }))
+    .pipe(
+      rev.manifest('build/public/rev-manifest.json', {
+        base: 'build/public',
+        merge: true
+      })
+    )
     .pipe(gulp.dest('build/public'))
     .pipe(reload({ stream: true }))
 })
@@ -98,7 +106,6 @@ gulp.task('lib', function() {
 //处理样式表
 gulp.task('style', function() {
   del.sync(paths.build.styles + '*')
-  console.log('删除历史样式表')
   return gulp
     .src(paths.src.styles + '*.styl')
     .pipe(sourcemaps.init())
@@ -107,10 +114,12 @@ gulp.task('style', function() {
     .pipe(rev())
     .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest(paths.build.styles))
-    .pipe(rev.manifest('build/public/rev-manifest.json', {
-      base: 'build/public',
-			merge: true
-    }))
+    .pipe(
+      rev.manifest('build/public/rev-manifest.json', {
+        base: 'build/public',
+        merge: true
+      })
+    )
     .pipe(gulp.dest('build/public'))
     .pipe(reload({ stream: true }))
 })

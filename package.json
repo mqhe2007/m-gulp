@@ -6,8 +6,8 @@
   "scripts": {
     "default": "cross-env NODE_ENV=development gulp",
     "init": "gulp init",
-    "dev": "cross-env NODE_NEV=development gulp start",
-    "build": "cross-env NODE_NEV=production gulp start"
+    "dev": "cross-env NODE_ENV=development gulp dev",
+    "build": "cross-env NODE_ENV=production gulp build"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.53",
