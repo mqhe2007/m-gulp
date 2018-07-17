@@ -118,7 +118,7 @@ gulp.task('style', function() {
 //压缩图片
 gulp.task('image', function() {
   return gulp
-    .src(paths.src.images + '**/*.{png,jpg,gif}')
+    .src(paths.src.images + '**/*')
     .pipe(
       gulpif(
         process.env.NODE_ENV === 'production',
@@ -168,11 +168,11 @@ gulp.task('server', function() {
   gulp.watch('*.js', { cwd: paths.src.scripts }, function(event) {
     gulpSequence('js', 'reload')()
   })
-  gulp.watch('**/*.min.js', { cwd: paths.src.libs }, ['lib'])
+  gulp.watch('**/*', { cwd: paths.src.libs }, ['lib'])
   gulp.watch('*.styl', { cwd: paths.src.styles }, function(event) {
     gulpSequence('style', 'reload')()
   })
-  gulp.watch('**/*.{png,jpg,gif}', { cwd: paths.src.images }, ['image'])
-  gulp.watch('**/*.html', { cwd: paths.src.pages }, ['page'])
-  gulp.watch('**/*.html', { cwd: paths.src.components }, ['page'])
+  gulp.watch('**/*', { cwd: paths.src.images }, ['image'])
+  gulp.watch('**/*', { cwd: paths.src.pages }, ['page'])
+  gulp.watch('**/*', { cwd: paths.src.components }, ['page'])
 })
