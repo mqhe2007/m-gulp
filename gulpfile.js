@@ -56,7 +56,7 @@ gulp.task('default', function() {
 // 开启glup工作流
 gulp.task(
   'start',
-  gulpSequence('clean', ['js', 'style', 'lib', 'image'], 'hash', 'html', 'server')
+  gulpSequence('clean', ['js', 'style', 'lib', 'image'], 'html', 'server')
 )
 
 // 清空build目录
@@ -78,7 +78,13 @@ gulp.task('js', function() {
     )
     .pipe(gulpif(process.env.NODE_ENV === 'production', uglify()))
     .pipe(gulpif(process.env.NODE_ENV === 'production', sourcemaps.write()))
+    .pipe(rev())
     .pipe(gulp.dest(paths.build.scripts))
+    .pipe(rev.manifest('build/public/rev-manifest.json', {
+      base: 'build/public',
+			merge: true
+    }))
+    .pipe(gulp.dest('build/public'))
     .pipe(reload({ stream: true }))
 })
 
@@ -98,23 +104,15 @@ gulp.task('style', function() {
     .pipe(sourcemaps.init())
     .pipe(stylus())
     .pipe(autoprefixer())
+    .pipe(rev())
     .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest(paths.build.styles))
-    .pipe(reload({ stream: true }))
-})
-
-// 为css,js添加版本号
-
-gulp.task('hash', () => {
-  del.sync(paths.build.html + 'public/rev-manifest.json')
-  console.log('删除历史替换清单')
-  return gulp
-    .src([paths.build.scripts + '**/*', paths.build.styles + '**/*'], {base: 'build'})
-    .pipe(rev())
-    .pipe(revDelete())
-    .pipe(gulp.dest('build'))
-    .pipe(rev.manifest())
+    .pipe(rev.manifest('build/public/rev-manifest.json', {
+      base: 'build/public',
+			merge: true
+    }))
     .pipe(gulp.dest('build/public'))
+    .pipe(reload({ stream: true }))
 })
 
 //压缩图片
@@ -149,6 +147,16 @@ gulp.task('html', function() {
     .pipe(reload({ stream: true }))
 })
 
+//页面重载资源
+gulp.task('reload', function() {
+  const manifest = gulp.src('build/public/rev-manifest.json')
+  return gulp
+    .src(paths.src.html + '**/*.html')
+    .pipe(revRewrite({ manifest }))
+    .pipe(gulp.dest(paths.build.html))
+    .pipe(reload({ stream: true }))
+})
+
 //启动服务器
 gulp.task('server', function() {
   browserSync.init({
@@ -156,11 +164,12 @@ gulp.task('server', function() {
       baseDir: 'build'
     }
   })
-  gulp.watch('*.js', { cwd: paths.src.scripts }, ['js'])
+  gulp.watch('*.js', { cwd: paths.src.scripts }, function(event) {
+    gulpSequence('js', 'reload')()
+  })
   gulp.watch('**/*.min.js', { cwd: paths.src.libs }, ['lib'])
   gulp.watch('*.styl', { cwd: paths.src.styles }, function(event) {
-    console.log(event.type)
-    gulpSequence('style', 'hash', 'html')()
+    gulpSequence('style', 'reload')()
   })
   gulp.watch('**/*.{png,jpg,gif}', { cwd: paths.src.images }, ['image'])
   gulp.watch('**/*.html', { cwd: paths.src.html }, ['html'])
