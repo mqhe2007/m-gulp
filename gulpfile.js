@@ -14,8 +14,8 @@ let gulp = require('gulp'), // gulp前端自动化工作流
   gulpSequence = require('gulp-sequence'), // 按顺序执行任务
   rev = require('gulp-rev'), // 为资源加上版本号
   revRewrite = require('gulp-rev-rewrite'), // 把html中的资源替换为加上版本号的资源
-  babel = require('gulp-babel'),
-  fileinclude = require('gulp-file-include')
+  babel = require('gulp-babel'), // 允许使用ES6以上新特性
+  fileinclude = require('gulp-file-include') // 支持在html中导入文件
 
 //设置各种输入输出文件夹的路径;
 let paths = {
